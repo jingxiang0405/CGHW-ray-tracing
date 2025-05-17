@@ -1,8 +1,8 @@
+#include "lodepng.h"
 #include "ray.hpp"
 #include "scene.hpp"
 #include "shape.hpp"
 #include "vec3.hpp"
-
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -91,9 +91,6 @@ color ray_color(const Ray &r, int depth, const Scene &world) {
   transmitted = ray_color(ray_transmit, depth - 1, world);
 
   return (w_l * local + w_r * reflected + w_t * transmitted);
-
-  // return ((1.0f - w_t) * (1.0f - w_r) * local + w_r * reflected) +
-  //        w_t * transmitted;
 }
 
 // Camera
@@ -130,6 +127,8 @@ int main(int argc, char *argv[]) {
 
   Scene world = build_scene();
 
+  std::vector<unsigned char> framebuffer;
+  framebuffer.resize(width * height * 4);
   fs::path outFile = make_unique_path("out/ray-tracing.ppm");
   std::ofstream file(outFile);
   //
@@ -145,12 +144,31 @@ int main(int argc, char *argv[]) {
       Ray r(origin, unit(uvcenter - origin));
       pixel_color += ray_color(r, MAX_DEPTH, world);
 
+      unsigned char R =
+          (unsigned char)(255 * std::clamp(pixel_color.r(), 0.0f, 1.0f));
+      unsigned char G =
+          (unsigned char)(255 * std::clamp(pixel_color.g(), 0.0f, 1.0f));
+      unsigned char B =
+          (unsigned char)(255 * std::clamp(pixel_color.b(), 0.0f, 1.0f));
+      int row = height - 1 - j;
+      int idx = 4 * (row * width + i);
+      framebuffer[idx + 0] = R;
+      framebuffer[idx + 1] = G;
+      framebuffer[idx + 2] = B;
+      framebuffer[idx + 3] = 255;
       // write color
-      file << int(pixel_color.r() * 255) << " " << int(pixel_color.g() * 255)
-           << " " << int(pixel_color.b() * 255) << "\n";
+      // file << int(pixel_color.r() * 255) << " " << int(pixel_color.g() * 255)
+      //      << " " << int(pixel_color.b() * 255) << "\n";
     }
   }
 
-  std::cout << "Image has been save to ./out/ray-tracing.ppm" << std::endl;
+  unsigned error = lodepng::encode("out/ray.png", framebuffer, width, height);
+  if (error) {
+    std::cerr << "PNG encoding error " << error << ": "
+              << lodepng_error_text(error) << "\n";
+    return 1;
+  }
+
+  std::cout << "Saved image to out/ray.png\n";
   return 0;
 }
