@@ -3,10 +3,7 @@
 #include "scene.hpp"
 #include "shape.hpp"
 #include "vec3.hpp"
-#include <filesystem>
-#include <fstream>
 #include <iostream>
-#include <sstream>
 
 #include <limits>
 
@@ -99,27 +96,6 @@ Vec3 lower_left_corner(-2, -1, -1);
 Vec3 horizontal(4, 0, 0);
 Vec3 vertical(0, 2, 0);
 
-namespace fs = std::filesystem;
-fs::path make_unique_path(const fs::path &desired) {
-  if (!fs::exists(desired)) {
-    return desired;
-  }
-
-  auto parent = desired.parent_path();
-  auto stem = desired.stem().string();     // e.g. "output"
-  auto ext = desired.extension().string(); // e.g. ".txt"
-
-  int index = 1;
-  while (true) {
-    // build "stem(index).ext"
-    std::ostringstream oss;
-    oss << stem << '(' << index++ << ')' << ext;
-    fs::path candidate = parent / oss.str();
-
-    if (!fs::exists(candidate))
-      return candidate;
-  }
-}
 int main(int argc, char *argv[]) {
   auto aspect = 16.0 / 9.0;
   int width = 2000;
@@ -129,11 +105,6 @@ int main(int argc, char *argv[]) {
 
   std::vector<unsigned char> framebuffer;
   framebuffer.resize(width * height * 4);
-  fs::path outFile = make_unique_path("out/ray-tracing.ppm");
-  std::ofstream file(outFile);
-  //
-  //
-  file << "P3\n" << width << " " << height << "\n255\n";
 
   for (int j = height - 1; j >= 0; j--) {
     for (int i = 0; i < width; i++) {
