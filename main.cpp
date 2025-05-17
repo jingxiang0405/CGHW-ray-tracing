@@ -10,7 +10,7 @@
 
 #include <limits>
 
-const int MAX_DEPTH = 5;
+const int MAX_DEPTH = 3;
 
 float max(float a, float b) { return a > b ? a : b; }
 // Light
@@ -69,18 +69,17 @@ color ray_color(const Ray &r, int depth, const Scene &world) {
   color local;
 
   Vec3 L = unit(LightPosition - rec.pos);
-  // bool have_intersection = false;
-  // intersect(world, rec.pos + 0.0001f * rec.normal, L, have_intersection);
-  //
-  // if (have_intersection) {
-  //   // shadow
-  //   local = color(0, 0, 0);
-  //   w_l = 0.0f;
-  // } else {
-  // local = shade(L, LightIntensity, rec);
-  // }
+  bool have_intersection = false;
+  intersect(world, rec.pos + 0.0001f * rec.normal, L, have_intersection);
 
-  local = shade(L, LightIntensity, rec);
+  if (have_intersection) {
+    // shadow
+    local = color(0, 0, 0);
+    w_l = 0.0f;
+  } else {
+    local = shade(L, LightIntensity, rec);
+  }
+
   w_l = rec.w_l;
   w_t = rec.w_t;
   w_r = rec.w_r;
